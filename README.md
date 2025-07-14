@@ -1,58 +1,96 @@
-# E-commerce Web Scraper
+# Web Scraper with Flask Interface
 
-A comprehensive Python web scraper for extracting product data from e-commerce websites with advanced features including rate limiting, retry logic, SQLite storage, and a command-line interface with progress tracking.
+A comprehensive Python web scraper for extracting product data from e-commerce websites with advanced features including rate limiting, retry logic, SQLite storage, a command-line interface, and a modern Flask web interface with real-time progress tracking.
 
 ## Features
 
+### 🕷️ **Web Scraping Engine**
 - **Modular Design**: Clean separation of concerns with dedicated modules for scraping, database management, and CLI
 - **Rate Limiting**: Configurable rate limiting to respect website resources
 - **Retry Logic**: Exponential backoff with jitter for handling failed requests
 - **Circuit Breaker**: Automatic failure detection and recovery
 - **SQLite Storage**: Efficient local database storage with indexing
-- **Progress Tracking**: Real-time progress bars and statistics
-- **Command-line Interface**: Comprehensive CLI with multiple commands
-- **Data Export**: Export scraped data to CSV format
-- **Site-specific Selectors**: Pre-configured selectors for popular e-commerce sites
+- **Site-specific Selectors**: Pre-configured selectors for popular e-commerce sites (Amazon, eBay, Etsy, books.toscrape.com)
 - **Error Handling**: Robust error handling with detailed logging
+
+### 🌐 **Flask Web Interface**
+- **Dashboard**: Real-time statistics and scraping overview with progress tracking
+- **Product Listing**: Browse, search, and filter scraped products with pagination
+- **Scraping Interface**: Start new scraping sessions with safety controls
+- **Product Details**: Full product information display with images
+- **Export**: Download products as CSV with one-click export
+
+### ⚠️ **Safety Features**
+- **IP Banning Warnings**: Prominent alerts about scraping risks and best practices
+- **Rate Limiting Controls**: Configurable requests per second (0.5-5.0)
+- **Page Limits**: Prevent overwhelming target servers with maximum page settings
+- **Responsible Scraping**: Built-in guidance for ethical web scraping
+
+### 🔧 **Technical Features**
+- **Command-line Interface**: Comprehensive CLI with multiple commands
+- **Real-time Progress**: Live updates during scraping operations
+- **Background Processing**: Non-blocking scraping with threading support
+- **Virtual Environment**: Proper dependency isolation
+- **Responsive Design**: Modern Bootstrap UI that works on all devices
 
 ## Installation
 
-1. Clone or download the scraper code
-2. Install required dependencies:
+1. **Clone the repository**:
+```bash
+git clone https://github.com/hum-ae-n/claudecode.git
+cd claudecode
+```
 
+2. **Create and activate virtual environment**:
+```bash
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+```
+
+3. **Install dependencies**:
 ```bash
 pip install -r requirements.txt
 ```
 
 ## Quick Start
 
-### Scrape a Category Page
+### Flask Web Interface
 
+1. **Start the web application**:
 ```bash
-python -m scraper.cli scrape https://example.com/category/electronics
+# Activate virtual environment
+source .venv/bin/activate
+
+# Run the Flask app
+python run_web_app.py
 ```
 
-### Scrape with Custom Rate Limiting
+2. **Access the interface**:
+   - Local: `http://127.0.0.1:5000`
+   - GitHub Codespaces: Use the forwarded port URL
+
+3. **Use the web interface**:
+   - 📊 **Dashboard** - View statistics and scraping progress
+   - 📦 **Products** - Browse and search scraped products
+   - 🚀 **Scrape** - Start new scraping with IP banning warnings
+   - 📥 **Export** - Download products as CSV
+
+### Command Line Interface
 
 ```bash
+# Scrape products from books.toscrape.com
+python -m scraper.cli scrape https://books.toscrape.com/ --max-pages 5 --rate 1.0
+
+# Scrape with custom rate limiting
 python -m scraper.cli scrape https://example.com/category/electronics --rate 0.5 --burst 3
-```
 
-### Scrape from URL List
-
-```bash
+# Scrape from URL list
 python -m scraper.cli scrape-urls product_urls.txt
-```
 
-### Export Data to CSV
-
-```bash
+# Export data to CSV
 python -m scraper.cli export products.csv
-```
 
-### View Database Statistics
-
-```bash
+# View database statistics
 python -m scraper.cli stats
 ```
 
@@ -218,11 +256,12 @@ Automatic failure detection:
 ## Supported Sites
 
 The scraper includes pre-configured selectors for:
-- Amazon
-- eBay
-- Etsy
+- **Books to Scrape** (`books.toscrape.com`) - Demo site perfect for testing
+- **Amazon** (`amazon.com`) - Product listings and details
+- **eBay** (`ebay.com`) - Auction and buy-it-now items
+- **Etsy** (`etsy.com`) - Handmade and vintage items
 
-Additional sites can be supported by adding selectors to the configuration.
+Additional sites can be supported by adding selectors to the configuration in `scraper/config.py`.
 
 ## Error Handling
 
@@ -241,12 +280,18 @@ Detailed logging with configurable levels:
 - Warning: Recoverable errors
 - Error: Critical failures
 
-## Legal Considerations
+## Legal and Ethical Considerations
 
-- Always check robots.txt before scraping
-- Respect rate limits and terms of service
-- Consider using official APIs when available
-- Be mindful of copyright and data protection laws
+⚠️ **Important**: This tool is for educational and research purposes only.
+
+- **Respect robots.txt**: Always check site policies before scraping
+- **Use reasonable rate limits**: Don't overwhelm servers (recommended: 1 request/second)
+- **Obtain permission**: Get explicit consent when possible
+- **Check terms of service**: Ensure compliance with site rules
+- **Consider APIs**: Use official APIs when available
+- **Be mindful of laws**: Respect copyright and data protection regulations
+
+The Flask interface includes prominent warnings about these considerations.
 
 ## Contributing
 
@@ -258,4 +303,8 @@ Detailed logging with configurable levels:
 
 ## License
 
-This project is for educational purposes. Please ensure compliance with website terms of service and applicable laws when using this scraper.
+This project is provided for educational purposes. Users are responsible for ensuring compliance with applicable laws and website terms of service.
+
+---
+
+**Built with ❤️ using Claude Code**
