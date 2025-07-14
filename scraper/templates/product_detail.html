@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} - Web Scraper{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h1>{{ product.name }}</h1>
+                    {% if product.price %}
+                        <div class="price">${{ "%.2f"|format(product.price) }}</div>
+                    {% endif %}
+                </div>
+                
+                {% if product.rating %}
+                    <div class="rating mb-3">
+                        {% for i in range(1, 6) %}
+                            {% if i <= product.rating %}
+                                <i class="fas fa-star"></i>
+                            {% else %}
+                                <i class="far fa-star"></i>
+                            {% endif %}
+                        {% endfor %}
+                        <span class="ms-2">
+                            {{ product.rating }}/5
+                            {% if product.reviews_count %}
+                                ({{ product.reviews_count }} reviews)
+                            {% endif %}
+                        </span>
+                    </div>
+                {% endif %}
+                
+                {% if product.brand or product.category %}
+                    <div class="mb-3">
+                        {% if product.brand %}
+                            <span class="brand-pill me-2">{{ product.brand }}</span>
+                        {% endif %}
+                        {% if product.category %}
+                            <span class="category-badge">{{ product.category.split('Home')[1] if 'Home' in product.category else product.category }}</span>
+                        {% endif %}
+                    </div>
+                {% endif %}
+                
+                {% if product.availability %}
+                    <div class="mb-3">
+                        <span class="badge bg-success">
+                            <i class="fas fa-check-circle"></i> {{ product.availability }}
+                        </span>
+                    </div>
+                {% endif %}
+                
+                {% if product.description %}
+                    <div class="mb-4">
+                        <h5>Description</h5>
+                        <p class="text-muted">{{ product.description }}</p>
+                    </div>
+                {% endif %}
+                
+                <div class="d-flex gap-2">
+                    <a href="{{ product.url }}" target="_blank" class="btn btn-primary">
+                        <i class="fas fa-external-link-alt"></i> View Original
+                    </a>
+                    <a href="{{ url_for('products') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Products
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Product Images -->
+        {% if product.image_urls %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Images</h5>
+                </div>
+                <div class="card-body">
+                    {% for image_url in product.image_urls %}
+                        <img src="{{ image_url }}" class="img-fluid mb-2 rounded" 
+                             alt="{{ product.name }}" 
+                             onerror="this.style.display='none'">
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+        
+        <!-- Product Details -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Product Details</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tbody>
+                        {% if product.price %}
+                            <tr>
+                                <td><strong>Price:</strong></td>
+                                <td class="price">${{ "%.2f"|format(product.price) }}</td>
+                            </tr>
+                        {% endif %}
+                        {% if product.rating %}
+                            <tr>
+                                <td><strong>Rating:</strong></td>
+                                <td>{{ product.rating }}/5</td>
+                            </tr>
+                        {% endif %}
+                        {% if product.reviews_count %}
+                            <tr>
+                                <td><strong>Reviews:</strong></td>
+                                <td>{{ product.reviews_count }}</td>
+                            </tr>
+                        {% endif %}
+                        {% if product.brand %}
+                            <tr>
+                                <td><strong>Brand:</strong></td>
+                                <td>{{ product.brand }}</td>
+                            </tr>
+                        {% endif %}
+                        {% if product.category %}
+                            <tr>
+                                <td><strong>Category:</strong></td>
+                                <td>{{ product.category.split('Home')[1] if 'Home' in product.category else product.category }}</td>
+                            </tr>
+                        {% endif %}
+                        {% if product.availability %}
+                            <tr>
+                                <td><strong>Availability:</strong></td>
+                                <td>{{ product.availability }}</td>
+                            </tr>
+                        {% endif %}
+                        <tr>
+                            <td><strong>Scraped:</strong></td>
+                            <td>{{ product.scraped_at.split('T')[0] }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="text-center">
+                    <a href="{{ product.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-external-link-alt"></i> View Original Page
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Web Scraper{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
+    <div>
+        <a href="{{ url_for('scrape') }}" class="btn btn-primary">
+            <i class="fas fa-play"></i> Start Scraping
+        </a>
+        <form method="POST" action="{{ url_for('clear_database') }}" class="d-inline" onsubmit="return confirm('Are you sure you want to clear all products?');">
+            <button type="submit" class="btn btn-danger">
+                <i class="fas fa-trash"></i> Clear Database
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <i class="fas fa-boxes fa-2x mb-2"></i>
+                <div class="stats-number">{{ stats.total_products }}</div>
+                <div>Total Products</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <i class="fas fa-dollar-sign fa-2x mb-2"></i>
+                <div class="stats-number">${{ "%.2f"|format(stats.avg_price) }}</div>
+                <div>Average Price</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <i class="fas fa-tags fa-2x mb-2"></i>
+                <div class="stats-number">{{ stats.categories|length }}</div>
+                <div>Categories</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <i class="fas fa-industry fa-2x mb-2"></i>
+                <div class="stats-number">{{ stats.brands|length }}</div>
+                <div>Brands</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Price Range -->
+{% if stats.min_price > 0 or stats.max_price > 0 %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-chart-line"></i> Price Range</h5>
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <small class="text-muted">Minimum Price</small>
+                        <div class="price">${{ "%.2f"|format(stats.min_price) }}</div>
+                    </div>
+                    <div>
+                        <small class="text-muted">Maximum Price</small>
+                        <div class="price">${{ "%.2f"|format(stats.max_price) }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row">
+    <!-- Top Categories -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-tags"></i> Top Categories</h5>
+            </div>
+            <div class="card-body">
+                {% if stats.categories %}
+                    {% for category in stats.categories %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>{{ category.name }}</span>
+                            <span class="badge bg-primary">{{ category.count }}</span>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">No categories found</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Brands -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-industry"></i> Top Brands</h5>
+            </div>
+            <div class="card-body">
+                {% if stats.brands %}
+                    {% for brand in stats.brands %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>{{ brand.name }}</span>
+                            <span class="badge bg-success">{{ brand.count }}</span>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">No brands found</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Products -->
+{% if stats.recent_products %}
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-clock"></i> Recently Scraped Products</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Product Name</th>
+                                <th>Price</th>
+                                <th>Scraped At</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in stats.recent_products %}
+                                <tr>
+                                    <td>{{ product.name }}</td>
+                                    <td class="price">
+                                        {% if product.price %}
+                                            ${{ "%.2f"|format(product.price) }}
+                                        {% else %}
+                                            <span class="text-muted">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ product.scraped_at }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Scraping Status -->
+{% if scraping_status.active %}
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card border-info">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-spinner fa-spin"></i> Scraping in Progress</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Current URL:</strong> {{ scraping_status.current_url }}</p>
+                <p><strong>Progress:</strong> {{ scraping_status.progress }} / {{ scraping_status.total }}</p>
+                <p><strong>Errors:</strong> {{ scraping_status.errors }}</p>
+                <div class="progress">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                         role="progressbar" 
+                         style="width: {{ ((scraping_status.progress / scraping_status.total) * 100) if scraping_status.total > 0 else 0 }}%">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Auto-refresh dashboard stats every 10 seconds
+    setInterval(function() {
+        fetch('/api/dashboard-stats')
+            .then(response => response.json())
+            .then(data => {
+                // Update stats if needed
+                location.reload();
+            })
+            .catch(error => console.error('Error updating dashboard:', error));
+    }, 10000);
+</script>
+{% endblock %}

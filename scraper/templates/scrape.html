@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Scrape - Web Scraper{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="mb-0"><i class="fas fa-play"></i> Start Scraping</h3>
+            </div>
+            <div class="card-body">
+                <!-- IP Banning Warning -->
+                <div class="alert alert-banner" role="alert">
+                    <h5 class="alert-heading">
+                        <i class="fas fa-exclamation-triangle"></i> Important Warning
+                    </h5>
+                    <p class="mb-2">
+                        <strong>IP Banning Risk:</strong> Excessive or rapid scraping can result in your IP address being blocked by the target website. This could prevent you from accessing the site entirely.
+                    </p>
+                    <hr class="bg-white">
+                    <p class="mb-0">
+                        <strong>Best Practices:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Use reasonable rate limits (1-2 requests per second)</li>
+                            <li>Limit the number of pages scraped per session</li>
+                            <li>Respect robots.txt files</li>
+                            <li>Consider using the site's official API if available</li>
+                        </ul>
+                    </p>
+                </div>
+                
+                <form method="POST" action="{{ url_for('scrape') }}">
+                    <div class="mb-3">
+                        <label for="url" class="form-label">
+                            <i class="fas fa-link"></i> Website URL
+                        </label>
+                        <input type="url" class="form-control" id="url" name="url" 
+                               placeholder="https://example.com/products" 
+                               required>
+                        <div class="form-text">
+                            Enter the URL of the product listing page or category page you want to scrape.
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="max_pages" class="form-label">
+                                    <i class="fas fa-file-alt"></i> Maximum Pages
+                                </label>
+                                <select class="form-select" id="max_pages" name="max_pages">
+                                    <option value="1">1 page</option>
+                                    <option value="2" selected>2 pages</option>
+                                    <option value="5">5 pages</option>
+                                    <option value="10">10 pages</option>
+                                    <option value="20">20 pages</option>
+                                </select>
+                                <div class="form-text">
+                                    Limit the number of pages to scrape to avoid overwhelming the server.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="rate_limit" class="form-label">
+                                    <i class="fas fa-tachometer-alt"></i> Rate Limit (requests/second)
+                                </label>
+                                <select class="form-select" id="rate_limit" name="rate_limit">
+                                    <option value="0.5">0.5 (Very Slow)</option>
+                                    <option value="1.0" selected>1.0 (Recommended)</option>
+                                    <option value="2.0">2.0 (Fast)</option>
+                                    <option value="5.0">5.0 (Very Fast - Risky)</option>
+                                </select>
+                                <div class="form-text">
+                                    Lower rates are safer but slower. Higher rates risk being blocked.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Supported Sites -->
+                    <div class="mb-4">
+                        <h6><i class="fas fa-globe"></i> Supported Sites</h6>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-book fa-2x text-primary mb-2"></i>
+                                        <h6>Books to Scrape</h6>
+                                        <small class="text-muted">books.toscrape.com</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-shopping-cart fa-2x text-warning mb-2"></i>
+                                        <h6>Amazon</h6>
+                                        <small class="text-muted">amazon.com</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-gavel fa-2x text-success mb-2"></i>
+                                        <h6>eBay</h6>
+                                        <small class="text-muted">ebay.com</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Terms and Conditions -->
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="terms" required>
+                            <label class="form-check-label" for="terms">
+                                I understand the risks of web scraping and agree to use this tool responsibly
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-play"></i> Start Scraping
+                        </button>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Dashboard
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Tips Card -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-lightbulb"></i> Scraping Tips</h5>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li><strong>Start Small:</strong> Begin with 1-2 pages to test if the scraper works correctly</li>
+                    <li><strong>Use Delays:</strong> Set rate limits to 1 request per second or slower</li>
+                    <li><strong>Check Robots.txt:</strong> Visit site.com/robots.txt to see scraping guidelines</li>
+                    <li><strong>Monitor Progress:</strong> Watch the dashboard for real-time scraping progress</li>
+                    <li><strong>Legal Compliance:</strong> Ensure you have permission to scrape the target website</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Form validation
+    document.getElementById('url').addEventListener('input', function(e) {
+        const url = e.target.value;
+        const submitBtn = document.querySelector('button[type="submit"]');
+        
+        if (url && url.includes('toscrape.com')) {
+            submitBtn.innerHTML = '<i class="fas fa-play"></i> Start Scraping (Books.toscrape.com detected)';
+        } else {
+            submitBtn.innerHTML = '<i class="fas fa-play"></i> Start Scraping';
+        }
+    });
+</script>
+{% endblock %}

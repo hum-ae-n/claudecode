@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+
+{% block title %}Products - Web Scraper{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="fas fa-boxes"></i> Products</h1>
+    <a href="{{ url_for('export') }}" class="btn btn-success">
+        <i class="fas fa-download"></i> Export CSV
+    </a>
+</div>
+
+<!-- Search and Filter Form -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('products') }}" class="row g-3">
+            <div class="col-md-4">
+                <label for="search" class="form-label">Search Products</label>
+                <input type="text" class="form-control" id="search" name="search" 
+                       placeholder="Search by name or description..." 
+                       value="{{ current_search }}">
+            </div>
+            <div class="col-md-3">
+                <label for="category" class="form-label">Category</label>
+                <select class="form-select" id="category" name="category">
+                    <option value="">All Categories</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat }}" {% if cat == current_category %}selected{% endif %}>
+                            {{ cat }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="brand" class="form-label">Brand</label>
+                <select class="form-select" id="brand" name="brand">
+                    <option value="">All Brands</option>
+                    {% for brand in brands %}
+                        <option value="{{ brand }}" {% if brand == current_brand %}selected{% endif %}>
+                            {{ brand }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="per_page" class="form-label">Per Page</label>
+                <select class="form-select" id="per_page" name="per_page">
+                    <option value="10" {% if request.args.get('per_page', '20') == '10' %}selected{% endif %}>10</option>
+                    <option value="20" {% if request.args.get('per_page', '20') == '20' %}selected{% endif %}>20</option>
+                    <option value="50" {% if request.args.get('per_page', '20') == '50' %}selected{% endif %}>50</option>
+                    <option value="100" {% if request.args.get('per_page', '20') == '100' %}selected{% endif %}>100</option>
+                </select>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Search
+                </button>
+                <a href="{{ url_for('products') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times"></i> Clear
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Products Grid -->
+{% if products %}
+    <div class="row">
+        {% for product in products %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card product-card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <a href="{{ url_for('product_detail', product_id=product.id) }}" 
+                               class="text-decoration-none">
+                                {{ product.name }}
+                            </a>
+                        </h5>
+                        
+                        {% if product.price %}
+                            <div class="price mb-2">${{ "%.2f"|format(product.price) }}</div>
+                        {% endif %}
+                        
+                        {% if product.rating %}
+                            <div class="rating mb-2">
+                                {% for i in range(1, 6) %}
+                                    {% if i <= product.rating %}
+                                        <i class="fas fa-star"></i>
+                                    {% else %}
+                                        <i class="far fa-star"></i>
+                                    {% endif %}
+                                {% endfor %}
+                                <small class="text-muted">
+                                    ({{ product.rating }}/5)
+                                    {% if product.reviews_count %}
+                                        - {{ product.reviews_count }} reviews
+                                    {% endif %}
+                                </small>
+                            </div>
+                        {% endif %}
+                        
+                        {% if product.description %}
+                            <p class="card-text text-muted">{{ product.description }}</p>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between align-items-end">
+                            <div>
+                                {% if product.brand %}
+                                    <span class="brand-pill">{{ product.brand }}</span>
+                                {% endif %}
+                                
+                                {% if product.availability %}
+                                    <small class="text-success">
+                                        <i class="fas fa-check-circle"></i> {{ product.availability }}
+                                    </small>
+                                {% endif %}
+                            </div>
+                            
+                            {% if product.category %}
+                                <span class="category-badge">{{ product.category.split('Home')[1] if 'Home' in product.category else product.category }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="card-footer text-muted">
+                        <small>
+                            <i class="fas fa-external-link-alt"></i>
+                            <a href="{{ product.url }}" target="_blank" class="text-decoration-none">
+                                View Original
+                            </a>
+                            <span class="float-end">
+                                {{ product.scraped_at.split('T')[0] }}
+                            </span>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if pagination.total_pages > 1 %}
+        <nav aria-label="Product pagination">
+            <ul class="pagination justify-content-center">
+                {% if pagination.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('products', page=pagination.prev_num, search=current_search, category=current_category, brand=current_brand, per_page=request.args.get('per_page', 20)) }}">
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </span>
+                    </li>
+                {% endif %}
+                
+                {% for page_num in range(1, pagination.total_pages + 1) %}
+                    {% if page_num == pagination.page %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                    {% elif page_num <= 3 or page_num >= pagination.total_pages - 2 or (page_num >= pagination.page - 1 and page_num <= pagination.page + 1) %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('products', page=page_num, search=current_search, category=current_category, brand=current_brand, per_page=request.args.get('per_page', 20)) }}">
+                                {{ page_num }}
+                            </a>
+                        </li>
+                    {% elif page_num == 4 or page_num == pagination.total_pages - 3 %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if pagination.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('products', page=pagination.next_num, search=current_search, category=current_category, brand=current_brand, per_page=request.args.get('per_page', 20)) }}">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </span>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+    
+    <!-- Results info -->
+    <div class="text-center text-muted mt-3">
+        Showing {{ ((pagination.page - 1) * pagination.per_page) + 1 }} to 
+        {{ pagination.page * pagination.per_page if pagination.page * pagination.per_page < pagination.total else pagination.total }} 
+        of {{ pagination.total }} products
+    </div>
+    
+{% else %}
+    <div class="text-center">
+        <div class="card">
+            <div class="card-body">
+                <i class="fas fa-search fa-4x text-muted mb-3"></i>
+                <h5>No products found</h5>
+                <p class="text-muted">
+                    {% if current_search or current_category or current_brand %}
+                        No products match your search criteria. Try adjusting your filters.
+                    {% else %}
+                        No products have been scraped yet. Start by adding some products!
+                    {% endif %}
+                </p>
+                <a href="{{ url_for('scrape') }}" class="btn btn-primary">
+                    <i class="fas fa-play"></i> Start Scraping
+                </a>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+{% endblock %}

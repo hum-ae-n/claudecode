@@ -155,6 +155,17 @@ SITE_CONFIGS = {
         'brand': '[data-testid="shop-name"]',
         'category': '.breadcrumb',
         'images': '[data-testid="product-image"] img'
+    },
+    'books.toscrape.com': {
+        'name': 'h1',
+        'price': '.price_color',
+        'description': '#product_description + p',
+        'rating': '.star-rating',
+        'reviews_count': '.review-count',
+        'availability': '.instock.availability',
+        'brand': '',
+        'category': '.breadcrumb',
+        'images': '#product_gallery img'
     }
 }
 

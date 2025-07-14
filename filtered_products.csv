@@ -1,0 +1,4 @@
+name,price,url,description,rating,reviews_count,availability,brand,category,image_urls,scraped_at
+iPhone 15 Pro,999.99,https://example.com/iphone-15-pro,Latest iPhone with titanium design,4.5,1234,In Stock,Apple,Electronics/Phones,"https://example.com/iphone1.jpg,https://example.com/iphone2.jpg",2025-07-14T13:10:32.014875
+Samsung Galaxy S24,899.99,https://example.com/galaxy-s24,Flagship Android phone with AI features,4.3,856,In Stock,Samsung,Electronics/Phones,https://example.com/galaxy1.jpg,2025-07-14T13:10:32.014883
+MacBook Pro 14-inch,1999.99,https://example.com/macbook-pro-14,Professional laptop with M3 chip,4.8,567,In Stock,Apple,Electronics/Computers,"https://example.com/macbook1.jpg,https://example.com/macbook2.jpg",2025-07-14T13:10:32.014885

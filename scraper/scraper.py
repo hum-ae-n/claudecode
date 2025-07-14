@@ -13,6 +13,7 @@ from urllib3.util.retry import Retry
 
 from .models import Product
 from .utils import RateLimiter, retry_on_failure, CircuitBreaker, random_user_agent, get_proxy_config
+from .config import get_site_config
 
 
 class ProductScraper:
@@ -155,10 +156,12 @@ class ProductScraper:
             'a[href*="/product/"]',
             'a[href*="/item/"]',
             'a[href*="/p/"]',
+            'a[href*="/catalogue/"]',  # books.toscrape.com
             '.product-link',
             '.product-item a',
             '.product-card a',
             '[data-product-id] a',
+            'h3 a',  # books.toscrape.com book titles
         ]
         
         for selector in selectors:
@@ -209,16 +212,19 @@ class ProductScraper:
             return None
         
         try:
+            # Get site-specific configuration
+            site_config = get_site_config(product_url)
+            
             # Extract product data using multiple strategies
-            name = self._extract_product_name(soup)
-            price = self._extract_product_price(soup)
-            description = self._extract_product_description(soup)
-            rating = self._extract_product_rating(soup)
-            reviews_count = self._extract_reviews_count(soup)
-            availability = self._extract_availability(soup)
-            brand = self._extract_brand(soup)
-            category = self._extract_category(soup)
-            image_urls = self._extract_image_urls(soup, product_url)
+            name = self._extract_product_name(soup, site_config)
+            price = self._extract_product_price(soup, site_config)
+            description = self._extract_product_description(soup, site_config)
+            rating = self._extract_product_rating(soup, site_config)
+            reviews_count = self._extract_reviews_count(soup, site_config)
+            availability = self._extract_availability(soup, site_config)
+            brand = self._extract_brand(soup, site_config)
+            category = self._extract_category(soup, site_config)
+            image_urls = self._extract_image_urls(soup, product_url, site_config)
             
             if not name:
                 self.logger.warning(f"Could not extract product name from {product_url}")
@@ -244,7 +250,7 @@ class ProductScraper:
             self.logger.error(f"Error scraping product {product_url}: {e}")
             return None
     
-    def _extract_product_name(self, soup: BeautifulSoup) -> str:
+    def _extract_product_name(self, soup: BeautifulSoup, site_config: Optional[Dict[str, str]] = None) -> str:
         """Extract product name from page."""
         selectors = [
             'h1[data-product-name]',
@@ -257,6 +263,10 @@ class ProductScraper:
             '.pdp-title',
         ]
         
+        # Use site-specific selector if available
+        if site_config and site_config.get('name'):
+            selectors.insert(0, site_config['name'])
+        
         for selector in selectors:
             element = soup.select_one(selector)
             if element:
@@ -266,7 +276,7 @@ class ProductScraper:
         
         return ""
     
-    def _extract_product_price(self, soup: BeautifulSoup) -> Optional[float]:
+    def _extract_product_price(self, soup: BeautifulSoup, site_config: Optional[Dict[str, str]] = None) -> Optional[float]:
         """Extract product price from page."""
         selectors = [
             '[data-testid="price"]',
@@ -278,6 +288,10 @@ class ProductScraper:
             '.sale-price',
             '[data-price]',
         ]
+        
+        # Use site-specific selector if available
+        if site_config and site_config.get('price'):
+            selectors.insert(0, site_config['price'])
         
         for selector in selectors:
             element = soup.select_one(selector)
@@ -292,7 +306,8 @@ class ProductScraper:
                 
                 # Extract from text
                 text = element.get_text(strip=True)
-                price_match = re.search(r'[\d,]+\.?\d*', text.replace(',', ''))
+                # Remove currency symbols and extract numbers
+                price_match = re.search(r'[\d,]+\.?\d*', text.replace(',', '').replace('£', '').replace('$', ''))
                 if price_match:
                     try:
                         return float(price_match.group())
@@ -301,7 +316,7 @@ class ProductScraper:
         
         return None
     
-    def _extract_product_description(self, soup: BeautifulSoup) -> str:
+    def _extract_product_description(self, soup: BeautifulSoup, site_config: Optional[Dict[str, str]] = None) -> str:
         """Extract product description from page."""
         selectors = [
             '[data-testid="product-description"]',
@@ -312,6 +327,10 @@ class ProductScraper:
             '.product-overview',
         ]
         
+        # Use site-specific selector if available
+        if site_config and site_config.get('description'):
+            selectors.insert(0, site_config['description'])
+        
         for selector in selectors:
             element = soup.select_one(selector)
             if element:
@@ -321,7 +340,7 @@ class ProductScraper:
         
         return ""
     
-    def _extract_product_rating(self, soup: BeautifulSoup) -> Optional[float]:
+    def _extract_product_rating(self, soup: BeautifulSoup, site_config: Optional[Dict[str, str]] = None) -> Optional[float]:
         """Extract product rating from page."""
         selectors = [
             '[data-testid="rating"]',
@@ -330,6 +349,10 @@ class ProductScraper:
             '.rating',
             '.review-rating',
         ]
+        
+        # Use site-specific selector if available
+        if site_config and site_config.get('rating'):
+            selectors.insert(0, site_config['rating'])
         
         for selector in selectors:
             element = soup.select_one(selector)
@@ -342,8 +365,17 @@ class ProductScraper:
                     except:
                         pass
                 
-                # Extract from text
+                # Extract from text or class names
                 text = element.get_text(strip=True)
+                class_names = ' '.join(element.get('class', []))
+                
+                # Check for star rating class patterns (e.g., 'star-rating Three')
+                star_match = re.search(r'(One|Two|Three|Four|Five)', class_names)
+                if star_match:
+                    star_map = {'One': 1, 'Two': 2, 'Three': 3, 'Four': 4, 'Five': 5}
+                    return float(star_map.get(star_match.group(1), 0))
+                
+                # Extract from text
                 rating_match = re.search(r'(\d+\.?\d*)', text)
                 if rating_match:
                     try:
@@ -355,7 +387,7 @@ class ProductScraper:
         
         return None
     
-    def _extract_reviews_count(self, soup: BeautifulSoup) -> Optional[int]:
+    def _extract_reviews_count(self, soup: BeautifulSoup, site_config: Optional[Dict[str, str]] = None) -> Optional[int]:
         """Extract number of reviews from page."""
         selectors = [
             '[data-testid="reviews-count"]',
@@ -363,6 +395,10 @@ class ProductScraper:
             '.review-count',
             '.rating-count',
         ]
+        
+        # Use site-specific selector if available
+        if site_config and site_config.get('reviews_count'):
+            selectors.insert(0, site_config['reviews_count'])
         
         for selector in selectors:
             element = soup.select_one(selector)
@@ -377,7 +413,7 @@ class ProductScraper:
         
         return None
     
-    def _extract_availability(self, soup: BeautifulSoup) -> str:
+    def _extract_availability(self, soup: BeautifulSoup, site_config: Optional[Dict[str, str]] = None) -> str:
         """Extract product availability from page."""
         selectors = [
             '[data-testid="availability"]',
@@ -386,6 +422,10 @@ class ProductScraper:
             '.product-availability',
         ]
         
+        # Use site-specific selector if available
+        if site_config and site_config.get('availability'):
+            selectors.insert(0, site_config['availability'])
+        
         for selector in selectors:
             element = soup.select_one(selector)
             if element:
@@ -395,7 +435,7 @@ class ProductScraper:
         
         return ""
     
-    def _extract_brand(self, soup: BeautifulSoup) -> str:
+    def _extract_brand(self, soup: BeautifulSoup, site_config: Optional[Dict[str, str]] = None) -> str:
         """Extract product brand from page."""
         selectors = [
             '[data-testid="brand"]',
@@ -404,6 +444,10 @@ class ProductScraper:
             '.manufacturer',
         ]
         
+        # Use site-specific selector if available
+        if site_config and site_config.get('brand'):
+            selectors.insert(0, site_config['brand'])
+        
         for selector in selectors:
             element = soup.select_one(selector)
             if element:
@@ -413,7 +457,7 @@ class ProductScraper:
         
         return ""
     
-    def _extract_category(self, soup: BeautifulSoup) -> str:
+    def _extract_category(self, soup: BeautifulSoup, site_config: Optional[Dict[str, str]] = None) -> str:
         """Extract product category from page."""
         selectors = [
             '[data-testid="category"]',
@@ -422,6 +466,10 @@ class ProductScraper:
             '.product-category',
         ]
         
+        # Use site-specific selector if available
+        if site_config and site_config.get('category'):
+            selectors.insert(0, site_config['category'])
+        
         for selector in selectors:
             element = soup.select_one(selector)
             if element:
@@ -431,7 +479,7 @@ class ProductScraper:
         
         return ""
     
-    def _extract_image_urls(self, soup: BeautifulSoup, base_url: str) -> List[str]:
+    def _extract_image_urls(self, soup: BeautifulSoup, base_url: str, site_config: Optional[Dict[str, str]] = None) -> List[str]:
         """Extract product image URLs from page."""
         image_urls = []
         
@@ -441,6 +489,10 @@ class ProductScraper:
             '.product-gallery img',
             '[data-testid="product-image"] img',
         ]
+        
+        # Use site-specific selector if available
+        if site_config and site_config.get('images'):
+            selectors.insert(0, site_config['images'])
         
         for selector in selectors:
             images = soup.select(selector)
